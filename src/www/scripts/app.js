@@ -323,7 +323,16 @@ module.exports = (function() {
                 }
             }
 
-            await emitter.emit("onConfigReady", window.dojoConfig);
+            //await emitter.emit("onConfigReady", window.dojoConfig);
+
+            //EH - since we want to influence the backbutton for android, we expose the handleBackButtonForApp here to the outside.
+            // This means that the script entry.js will now receive this function, so it can be "intercepted"
+            await emitter.emit("onConfigReady", window.dojoConfig, handleBackButtonForApp);
+            if (window.dojoConfig.customHandleBackButtonForApp) {
+                //replace the backbutton handleBackButtonForApp function if it was set in entry.js
+                handleBackButtonForApp = window.dojoConfig.customHandleBackButtonForApp;
+            }
+            //~EH
 
             // Because loading all app scripts takes quite a while we do that first and defer removing our
             // own styles and scripts until mx exists.  We need to hold on to our own styles as long as we
@@ -584,7 +593,7 @@ module.exports = (function() {
             try {
                 let remoteResult = await getRemoteConfig();
 
-                let updateConfig = async () => {
+                let updateConfig = async() => {
                     await synchronizePackage(sourceUri + "?" + remoteResult.cachebust, destinationUri);
                     window.location.reload();
                 };
@@ -877,7 +886,7 @@ module.exports = (function() {
             if (cordova.platformId === "ios" && await _fileExists(sourceUri)) {
                 await unzip(sourceUri, resourcesDirectory, () => {}).catch(e => _removeRecursively(resourcesDirectory));
                 await removeFile(sourceUri);
-            }    
+            }
         } catch (e) {}
     };
 
